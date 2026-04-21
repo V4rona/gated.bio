@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Iniciar sesión — Gated.bio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #111111; --bg2: #161616; --bg3: #1c1c1c;
+      --border: #202020; --border2: #2a2a2a;
+      --text: #efefef; --text2: #888; --text3: #404040;
+      --green: #a8d9b8; --green-dim: #172419;
+      --green-border: rgba(168,217,184,0.18);
+      --error: #e05a5a;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-weight: 300;
+      min-height: 100vh; display: flex; flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+    .auth-wrapper { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px 24px; }
+    .auth-box { width: 100%; max-width: 400px; opacity: 0; transform: translateY(12px); animation: fadeUp .5s ease forwards .1s; }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+    .auth-logo { display: block; text-align: center; font-family: 'DM Serif Display', serif; font-size: 21px; color: var(--text); text-decoration: none; margin-bottom: 32px; }
+    .auth-logo span { color: var(--green); }
+
+    .auth-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 34px 30px 30px; }
+    .auth-title { font-family: 'DM Serif Display', serif; font-size: 23px; color: var(--text); margin-bottom: 5px; letter-spacing: -.02em; }
+    .auth-sub { font-size: 13px; color: var(--text2); margin-bottom: 26px; }
+
+    .social-btn {
+      width: 100%; padding: 11px 16px;
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: 8px; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400;
+      cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;
+      transition: border-color .2s, background .2s; margin-bottom: 10px;
+    }
+    .social-btn:last-of-type { margin-bottom: 0; }
+    .social-btn:hover { border-color: #3a3a3a; background: #202020; }
+    .social-icon { width: 18px; height: 18px; flex-shrink: 0; }
+
+    .or-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+    .or-line { flex: 1; height: 1px; background: var(--border); }
+    .or-text { font-size: 11px; color: var(--text3); letter-spacing: .05em; }
+
+    .form-group { margin-bottom: 14px; }
+    .label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    label { display: block; font-size: 12px; color: var(--text2); letter-spacing: .03em; margin-bottom: 6px; }
+    .label-row label { margin-bottom: 0; }
+
+    .forgot-link { font-size: 12px; color: var(--text3); text-decoration: none; transition: color .2s; }
+    .forgot-link:hover { color: var(--text2); }
+
+    input[type="email"], input[type="password"] {
+      width: 100%; padding: 11px 13px;
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: 8px; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 300;
+      outline: none; transition: border-color .2s;
+    }
+    input:focus { border-color: #3a3a3a; }
+    input::placeholder { color: var(--text3); }
+    input.err { border-color: var(--error); }
+
+    .global-alert { border-radius: 8px; padding: 11px 14px; font-size: 13px; margin-bottom: 16px; display: none; }
+    .global-alert.error { background: rgba(224,90,90,.08); border: 1px solid rgba(224,90,90,.2); color: var(--error); }
+    .global-alert.show { display: block; }
+
+    .btn-submit {
+      width: 100%; padding: 12px; margin-top: 6px;
+      background: var(--green); color: #111;
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+      border: none; border-radius: 8px; cursor: pointer; transition: opacity .2s;
+    }
+    .btn-submit:hover { opacity: .85; }
+    .btn-submit:disabled { opacity: .3; cursor: not-allowed; }
+
+    .auth-bottom { text-align: center; margin-top: 18px; font-size: 13px; color: var(--text2); }
+    .auth-bottom a { color: var(--text); text-decoration: none; }
+    .auth-bottom a:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+    .page-footer { text-align: center; padding: 20px; font-size: 11px; color: var(--text3); }
+
+    /* forgot panel */
+    .panel { }
+    .panel.hidden { display: none; }
+
+    .back-btn {
+      background: none; border: none; color: var(--text3);
+      font-family: 'DM Sans', sans-serif; font-size: 12px;
+      cursor: pointer; padding: 0; margin-bottom: 18px;
+      display: flex; align-items: center; gap: 5px; transition: color .2s;
+    }
+    .back-btn:hover { color: var(--text2); }
+
+    .sent-msg { display: none; text-align: center; padding: 8px 0; }
+    .sent-msg p:first-child { font-family: 'DM Serif Display', serif; font-size: 20px; color: var(--text); margin-bottom: 8px; }
+    .sent-msg p:last-child { font-size: 13px; color: var(--text2); line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+<div class="auth-wrapper">
+  <div class="auth-box">
+
+    <a href="index.html" class="auth-logo">Gated<span>.bio</span></a>
+
+    <div class="auth-card">
+
+      <!-- LOGIN PANEL -->
+      <div id="login-panel" class="panel">
+        <h1 class="auth-title">Bienvenido</h1>
+        <p class="auth-sub">Accede a tu perfil.</p>
+
+        <div class="global-alert error" id="login-error">Correo o contraseña incorrectos.</div>
+
+        <button class="social-btn" id="btn-google">
+          <svg class="social-icon" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Continuar con Google
+        </button>
+
+        <button class="social-btn" id="btn-github">
+          <svg class="social-icon" viewBox="0 0 24 24" fill="var(--text)">
+            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          Continuar con GitHub
+        </button>
+
+        <div class="or-divider">
+          <div class="or-line"></div>
+          <span class="or-text">o con tu correo</span>
+          <div class="or-line"></div>
+        </div>
+
+        <form id="login-form" novalidate>
+          <div class="form-group">
+            <label for="email">Correo electrónico</label>
+            <input type="email" id="email" placeholder="tu@email.com" autocomplete="email" />
+          </div>
+          <div class="form-group">
+            <div class="label-row">
+              <label for="password">Contraseña</label>
+              <a href="#" class="forgot-link" id="forgot-trigger">¿La olvidaste?</a>
+            </div>
+            <input type="password" id="password" placeholder="Tu contraseña" autocomplete="current-password" />
+          </div>
+          <button type="submit" class="btn-submit" id="login-btn">Entrar</button>
+        </form>
+
+        <div class="auth-bottom">
+          ¿No tienes cuenta? <a href="register.html">Crear mi perfil gratis</a>
+        </div>
+      </div>
+
+      <!-- FORGOT PANEL -->
+      <div id="forgot-panel" class="panel hidden">
+        <div id="forgot-form-wrap">
+          <button class="back-btn" id="back-btn">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+            Volver
+          </button>
+          <h2 style="font-family:'DM Serif Display',serif;font-size:22px;color:var(--text);margin-bottom:8px;letter-spacing:-.02em;">Recuperar acceso</h2>
+          <p style="font-size:13px;color:var(--text2);margin-bottom:22px;line-height:1.5;">Introduce tu correo y te enviaremos un enlace para restablecer tu contraseña.</p>
+          <form id="forgot-form" novalidate>
+            <div class="form-group">
+              <label for="forgot-email">Correo electrónico</label>
+              <input type="email" id="forgot-email" placeholder="tu@email.com" autocomplete="email" />
+            </div>
+            <button type="submit" class="btn-submit">Enviar enlace</button>
+          </form>
+        </div>
+        <div class="sent-msg" id="sent-msg">
+          <p>Enlace enviado</p>
+          <p>Si ese correo existe en Gated.bio, recibirás un enlace en los próximos minutos.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<p class="page-footer">Gated.bio — Todos los derechos reservados</p>
+
+<script>
+  // ── CONFIG — reemplaza con tus claves de Supabase ──
+  const SUPABASE_URL      = 'https://ahicgwihlttxznhsntqz.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_moFkAg7WBxSghWkL4NiXog_cAfExcRy';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const redirect = window.location.origin + '/dashboard.html';
+
+  // Google
+  document.getElementById('btn-google').addEventListener('click', async () => {
+    await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redirect } });
+  });
+
+  // GitHub
+  document.getElementById('btn-github').addEventListener('click', async () => {
+    await sb.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: redirect } });
+  });
+
+  // Email login
+  document.getElementById('login-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const errEl    = document.getElementById('login-error');
+    const btn      = document.getElementById('login-btn');
+
+    errEl.classList.remove('show');
+    btn.disabled = true; btn.textContent = 'Entrando...';
+
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+
+    if (error) {
+      errEl.classList.add('show');
+      btn.disabled = false; btn.textContent = 'Entrar';
+    } else {
+      window.location.href = 'dashboard.html';
+    }
+  });
+
+  // Forgot toggle
+  document.getElementById('forgot-trigger').addEventListener('click', (e) => {
+    e.preventDefault();
+    document.getElementById('login-panel').classList.add('hidden');
+    document.getElementById('forgot-panel').classList.remove('hidden');
+  });
+
+  document.getElementById('back-btn').addEventListener('click', () => {
+    document.getElementById('forgot-panel').classList.add('hidden');
+    document.getElementById('login-panel').classList.remove('hidden');
+  });
+
+  // Forgot form
+  document.getElementById('forgot-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const email = document.getElementById('forgot-email').value.trim();
+    if (!email) return;
+    await sb.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reset-password.html' });
+    document.getElementById('forgot-form-wrap').style.display = 'none';
+    document.getElementById('sent-msg').style.display = 'block';
+  });
+
+  // Si ya hay sesión activa, redirigir al dashboard
+  sb.auth.getSession().then(({ data: { session } }) => {
+    if (session) window.location.href = 'dashboard.html';
+  });
+</script>
+</body>
+</html>

@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Crear cuenta — Gated.bio</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --bg: #111111; --bg2: #161616; --bg3: #1c1c1c;
+      --border: #202020; --border2: #2a2a2a;
+      --text: #efefef; --text2: #888; --text3: #404040;
+      --green: #a8d9b8; --green-dim: #172419;
+      --green-border: rgba(168,217,184,0.18);
+      --error: #e05a5a;
+    }
+    body {
+      background: var(--bg); color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-weight: 300;
+      min-height: 100vh; display: flex; flex-direction: column;
+      -webkit-font-smoothing: antialiased;
+    }
+    .auth-wrapper {
+      flex: 1; display: flex;
+      align-items: center; justify-content: center; padding: 48px 24px;
+    }
+    .auth-box {
+      width: 100%; max-width: 400px;
+      opacity: 0; transform: translateY(12px);
+      animation: fadeUp .5s ease forwards .1s;
+    }
+    @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
+
+    .auth-logo {
+      display: block; text-align: center;
+      font-family: 'DM Serif Display', serif;
+      font-size: 21px; color: var(--text);
+      text-decoration: none; margin-bottom: 32px;
+    }
+    .auth-logo span { color: var(--green); }
+
+    .auth-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 16px; padding: 34px 30px 30px;
+    }
+    .auth-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 23px; color: var(--text);
+      margin-bottom: 5px; letter-spacing: -.02em;
+    }
+    .auth-sub { font-size: 13px; color: var(--text2); margin-bottom: 26px; }
+
+    /* social */
+    .social-btn {
+      width: 100%; padding: 11px 16px;
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: 8px; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 400;
+      cursor: pointer; display: flex; align-items: center;
+      justify-content: center; gap: 10px;
+      transition: border-color .2s, background .2s;
+      margin-bottom: 10px; text-decoration: none;
+    }
+    .social-btn:last-of-type { margin-bottom: 0; }
+    .social-btn:hover { border-color: #3a3a3a; background: #202020; }
+    .social-icon { width: 18px; height: 18px; flex-shrink: 0; }
+
+    /* divider */
+    .or-divider { display: flex; align-items: center; gap: 12px; margin: 20px 0; }
+    .or-line { flex: 1; height: 1px; background: var(--border); }
+    .or-text { font-size: 11px; color: var(--text3); letter-spacing: .05em; }
+
+    /* form */
+    .form-group { margin-bottom: 14px; }
+    label { display: block; font-size: 12px; color: var(--text2); letter-spacing: .03em; margin-bottom: 6px; }
+
+    input[type="text"], input[type="email"], input[type="password"] {
+      width: 100%; padding: 11px 13px;
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: 8px; color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 300;
+      outline: none; transition: border-color .2s;
+    }
+    input:focus { border-color: #3a3a3a; }
+    input::placeholder { color: var(--text3); }
+    input.err { border-color: var(--error); }
+
+    .input-wrap { position: relative; }
+    .input-prefix {
+      position: absolute; left: 13px; top: 50%;
+      transform: translateY(-50%);
+      font-size: 13px; color: var(--text3); pointer-events: none;
+    }
+    .input-wrap input { padding-left: 90px; }
+    .input-suffix { position: absolute; right: 11px; top: 50%; transform: translateY(-50%); font-size: 11px; }
+    .input-suffix.ok { color: var(--green); }
+    .input-suffix.bad { color: var(--error); }
+
+    .strength-bar { height: 2px; background: var(--border); border-radius: 2px; margin-top: 7px; overflow: hidden; }
+    .strength-fill { height: 100%; border-radius: 2px; width: 0%; transition: width .3s, background .3s; }
+
+    .field-error { font-size: 11px; color: var(--error); margin-top: 4px; display: none; }
+    .field-error.show { display: block; }
+
+    .global-alert {
+      border-radius: 8px; padding: 11px 14px;
+      font-size: 13px; margin-bottom: 16px; display: none;
+    }
+    .global-alert.error { background: rgba(224,90,90,.08); border: 1px solid rgba(224,90,90,.2); color: var(--error); }
+    .global-alert.show { display: block; }
+
+    .terms-row { display: flex; align-items: flex-start; gap: 9px; margin: 18px 0 22px; }
+    .terms-row input[type="checkbox"] { width: 15px; height: 15px; min-width: 15px; margin-top: 2px; accent-color: var(--green); }
+    .terms-row label { font-size: 12px; color: var(--text2); margin: 0; line-height: 1.5; letter-spacing: 0; }
+    .terms-row a { color: var(--text2); }
+    .terms-row a:hover { color: var(--text); }
+
+    .btn-submit {
+      width: 100%; padding: 12px;
+      background: var(--green); color: #111;
+      font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+      border: none; border-radius: 8px; cursor: pointer; transition: opacity .2s;
+    }
+    .btn-submit:hover { opacity: .85; }
+    .btn-submit:disabled { opacity: .3; cursor: not-allowed; }
+
+    .auth-bottom { text-align: center; margin-top: 18px; font-size: 13px; color: var(--text2); }
+    .auth-bottom a { color: var(--text); text-decoration: none; }
+    .auth-bottom a:hover { text-decoration: underline; text-underline-offset: 2px; }
+
+    .page-footer { text-align: center; padding: 20px; font-size: 11px; color: var(--text3); }
+
+    .success-screen { display: none; text-align: center; padding: 12px 0; }
+    .success-icon {
+      width: 50px; height: 50px; border-radius: 50%;
+      background: var(--green-dim); border: 1px solid var(--green-border);
+      display: flex; align-items: center; justify-content: center; margin: 0 auto 16px;
+    }
+    .success-title { font-family: 'DM Serif Display', serif; font-size: 22px; color: var(--text); margin-bottom: 8px; }
+    .success-desc { font-size: 13px; color: var(--text2); line-height: 1.6; }
+  </style>
+</head>
+<body>
+
+<div class="auth-wrapper">
+  <div class="auth-box">
+
+    <a href="index.html" class="auth-logo">Gated<span>.bio</span></a>
+
+    <div class="auth-card">
+      <div id="form-state">
+        <h1 class="auth-title">Crea tu perfil</h1>
+        <p class="auth-sub">Gratis para siempre. Sin tarjeta de crédito.</p>
+
+        <div class="global-alert error" id="global-error"></div>
+
+        <button class="social-btn" id="btn-google">
+          <svg class="social-icon" viewBox="0 0 24 24">
+            <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+            <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+            <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z"/>
+            <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+          </svg>
+          Continuar con Google
+        </button>
+
+        <button class="social-btn" id="btn-github">
+          <svg class="social-icon" viewBox="0 0 24 24" fill="var(--text)">
+            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0 1 12 6.844a9.59 9.59 0 0 1 2.504.337c1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.02 10.02 0 0 0 22 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          Continuar con GitHub
+        </button>
+
+        <div class="or-divider">
+          <div class="or-line"></div>
+          <span class="or-text">o con tu correo</span>
+          <div class="or-line"></div>
+        </div>
+
+        <form id="register-form" novalidate>
+          <div class="form-group">
+            <label>Nombre de usuario</label>
+            <div class="input-wrap">
+              <span class="input-prefix">gated.bio/</span>
+              <input type="text" id="username" placeholder="tunombre" autocomplete="off" />
+              <span class="input-suffix" id="user-status"></span>
+            </div>
+            <p class="field-error" id="username-error">Solo letras, números y guiones. Mínimo 3 caracteres.</p>
+          </div>
+
+          <div class="form-group">
+            <label>Correo electrónico</label>
+            <input type="email" id="email" placeholder="tu@email.com" autocomplete="email" />
+            <p class="field-error" id="email-error">Introduce un correo válido.</p>
+          </div>
+
+          <div class="form-group">
+            <label>Contraseña</label>
+            <input type="password" id="password" placeholder="Mínimo 8 caracteres" autocomplete="new-password" />
+            <div class="strength-bar"><div class="strength-fill" id="strength-fill"></div></div>
+            <p class="field-error" id="password-error">Mínimo 8 caracteres.</p>
+          </div>
+
+          <div class="terms-row">
+            <input type="checkbox" id="terms" />
+            <label for="terms">Acepto los <a href="#">términos de uso</a> y la <a href="#">política de privacidad</a></label>
+          </div>
+
+          <button type="submit" class="btn-submit" id="submit-btn">Crear mi perfil</button>
+        </form>
+
+        <div class="auth-bottom">
+          ¿Ya tienes cuenta? <a href="login.html">Iniciar sesión</a>
+        </div>
+      </div>
+
+      <div class="success-screen" id="success-screen">
+        <div class="success-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a8d9b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>
+        </div>
+        <p class="success-title">Perfil creado</p>
+        <p class="success-desc">Revisa tu correo para confirmar tu cuenta.<br>Te esperamos dentro.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<p class="page-footer">Gated.bio — Todos los derechos reservados</p>
+
+<script>
+  // ── CONFIG — reemplaza con tus claves de Supabase ──
+  const SUPABASE_URL      = 'https://ahicgwihlttxznhsntqz.supabase.co';
+  const SUPABASE_ANON_KEY = 'sb_publishable_moFkAg7WBxSghWkL4NiXog_cAfExcRy';
+  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+  const redirect = window.location.origin + '/dashboard.html';
+
+  document.getElementById('btn-google').addEventListener('click', async () => {
+    await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: redirect } });
+  });
+
+  document.getElementById('btn-github').addEventListener('click', async () => {
+    await sb.auth.signInWithOAuth({ provider: 'github', options: { redirectTo: redirect } });
+  });
+
+  // username
+  const usernameInput = document.getElementById('username');
+  const userStatus    = document.getElementById('user-status');
+  let uTimer;
+
+  usernameInput.addEventListener('input', () => {
+    clearTimeout(uTimer);
+    const val = usernameInput.value.trim();
+    userStatus.textContent = ''; userStatus.className = 'input-suffix';
+    if (!val) return;
+    const ok = /^[a-zA-Z0-9-]{3,}$/.test(val);
+    document.getElementById('username-error').classList.toggle('show', !ok);
+    usernameInput.classList.toggle('err', !ok);
+    if (!ok) return;
+    uTimer = setTimeout(async () => {
+      const reserved = ['admin','gated','api','app','www','help','support','dashboard'];
+      const taken = reserved.includes(val.toLowerCase());
+      userStatus.textContent = taken ? 'No disponible' : 'Disponible';
+      userStatus.className = 'input-suffix ' + (taken ? 'bad' : 'ok');
+    }, 500);
+  });
+
+  // password strength
+  document.getElementById('password').addEventListener('input', () => {
+    const v = document.getElementById('password').value;
+    let s = 0;
+    if (v.length >= 8) s++;
+    if (/[A-Z]/.test(v)) s++;
+    if (/[0-9]/.test(v)) s++;
+    if (/[^a-zA-Z0-9]/.test(v)) s++;
+    const f = document.getElementById('strength-fill');
+    f.style.width = ['0%','25%','50%','75%','100%'][s];
+    f.style.background = ['','#e05a5a','#e0a05a','#a8d9b8','#a8d9b8'][s];
+  });
+
+  // register
+  document.getElementById('register-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const username = usernameInput.value.trim();
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const terms    = document.getElementById('terms').checked;
+    let valid = true;
+
+    if (!username || !/^[a-zA-Z0-9-]{3,}$/.test(username)) {
+      document.getElementById('username-error').classList.add('show');
+      usernameInput.classList.add('err'); valid = false;
+    }
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      document.getElementById('email-error').classList.add('show');
+      document.getElementById('email').classList.add('err'); valid = false;
+    }
+    if (!password || password.length < 8) {
+      document.getElementById('password-error').classList.add('show');
+      document.getElementById('password').classList.add('err'); valid = false;
+    }
+    if (!terms) { document.getElementById('terms').style.outline = '1px solid #e05a5a'; valid = false; }
+    if (!valid) return;
+
+    const btn = document.getElementById('submit-btn');
+    btn.disabled = true; btn.textContent = 'Creando tu perfil...';
+
+    const { error } = await sb.auth.signUp({ email, password, options: { data: { username } } });
+
+    if (error) {
+      const el = document.getElementById('global-error');
+      el.textContent = error.message.includes('already') ? 'Ya existe una cuenta con ese correo.' : 'Algo fue mal. Inténtalo de nuevo.';
+      el.classList.add('show');
+      btn.disabled = false; btn.textContent = 'Crear mi perfil';
+    } else {
+      document.getElementById('form-state').style.display = 'none';
+      document.getElementById('success-screen').style.display = 'block';
+    }
+  });
+
+  document.querySelectorAll('input').forEach(i => i.addEventListener('input', () => i.classList.remove('err')));
+  document.getElementById('terms').addEventListener('change', function() { this.style.outline = ''; });
+</script>
+</body>
+</html>

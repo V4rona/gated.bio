@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gated.bio — Tu bio link con zona privada</title>
+  <meta name="description" content="El bio link con dos capas. Comparte tus links públicos con todos y tu contenido exclusivo solo con quien tú elijas." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #111111;
+      --bg2:      #161616;
+      --bg3:      #1c1c1c;
+      --border:   #202020;
+      --border2:  #2a2a2a;
+      --text:     #efefef;
+      --text2:    #888;
+      --text3:    #404040;
+      --green:    #a8d9b8;
+      --green-dim:#172419;
+      --green-border: rgba(168,217,184,0.18);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 40px;
+      background: rgba(17,17,17,0.9);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid transparent;
+      transition: border-color .3s;
+    }
+    nav.scrolled { border-bottom-color: var(--border); }
+
+    .nav-logo {
+      font-family: 'DM Serif Display', serif;
+      font-size: 17px; color: var(--text);
+      text-decoration: none; letter-spacing: -.01em;
+    }
+    .nav-logo span { color: var(--green); }
+
+    .nav-right { display: flex; align-items: center; gap: 28px; }
+
+    .nav-links { display: flex; align-items: center; gap: 28px; list-style: none; }
+    .nav-links a {
+      font-size: 13px; color: var(--text2); text-decoration: none;
+      transition: color .2s;
+    }
+    .nav-links a:hover { color: var(--text); }
+
+    .nav-cta {
+      font-size: 13px; font-weight: 400;
+      color: #111 !important;
+      background: var(--green);
+      padding: 8px 18px; border-radius: 7px;
+      text-decoration: none;
+      transition: opacity .2s !important;
+    }
+    .nav-cta:hover { opacity: .85 !important; }
+
+    /* ── HERO ── */
+    .hero {
+      min-height: 100vh;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+      padding: 130px 24px 80px;
+      position: relative; overflow: hidden;
+    }
+
+    .hero-glow {
+      position: absolute; top: 35%; left: 50%;
+      transform: translate(-50%,-50%);
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(168,217,184,.05) 0%, transparent 68%);
+      pointer-events: none;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 7px;
+      background: var(--green-dim);
+      border: 1px solid var(--green-border);
+      border-radius: 100px;
+      padding: 5px 14px;
+      font-size: 12px; color: var(--green);
+      letter-spacing: .04em; margin-bottom: 36px;
+      opacity: 0; animation: fadeUp .6s ease forwards .1s;
+    }
+    .badge-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); }
+
+    h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(44px, 8vw, 82px);
+      font-weight: 400; line-height: 1.07;
+      letter-spacing: -.035em; color: var(--text);
+      max-width: 760px; margin-bottom: 24px;
+      opacity: 0; animation: fadeUp .7s ease forwards .2s;
+    }
+    h1 em { font-style: italic; color: var(--text2); }
+
+    .hero-sub {
+      font-size: 16px; color: var(--text2);
+      max-width: 420px; line-height: 1.75; margin-bottom: 40px;
+      opacity: 0; animation: fadeUp .7s ease forwards .35s;
+    }
+
+    .hero-actions {
+      display: flex; align-items: center; gap: 12px;
+      flex-wrap: wrap; justify-content: center;
+      opacity: 0; animation: fadeUp .7s ease forwards .5s;
+    }
+
+    .btn-primary {
+      background: var(--green); color: #111;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 500;
+      padding: 13px 28px; border-radius: 8px;
+      border: none; cursor: pointer;
+      text-decoration: none; display: inline-block;
+      transition: opacity .2s;
+    }
+    .btn-primary:hover { opacity: .85; }
+
+    .btn-ghost {
+      background: transparent; color: var(--text2);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 300;
+      padding: 13px 20px; border-radius: 8px;
+      border: 1px solid var(--border2);
+      cursor: pointer; text-decoration: none; display: inline-block;
+      transition: color .2s, border-color .2s;
+    }
+    .btn-ghost:hover { color: var(--text); border-color: #3a3a3a; }
+
+    /* ── PROFILE PREVIEW ── */
+    .hero-preview {
+      margin-top: 64px; width: 100%; max-width: 310px;
+      opacity: 0; animation: fadeUp .8s ease forwards .7s;
+    }
+
+    .preview-card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 20px; padding: 28px 22px 24px;
+      display: flex; flex-direction: column; align-items: center;
+    }
+
+    .preview-avatar {
+      width: 68px; height: 68px; border-radius: 50%;
+      background: var(--bg3); border: 1px solid var(--border2);
+      display: flex; align-items: center; justify-content: center;
+      font-family: 'DM Serif Display', serif;
+      font-size: 24px; color: var(--text3); margin-bottom: 12px;
+    }
+
+    .preview-name { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 3px; }
+    .preview-bio { font-size: 12px; color: var(--text2); text-align: center; margin-bottom: 18px; line-height: 1.5; }
+
+    .preview-links { width: 100%; display: flex; flex-direction: column; gap: 7px; margin-bottom: 14px; }
+    .preview-link {
+      width: 100%; padding: 10px 14px;
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: 7px; font-size: 12px; color: #bbb; text-align: center;
+    }
+
+    .preview-divider { width: 100%; display: flex; align-items: center; gap: 10px; margin-bottom: 11px; }
+    .preview-divider-line { flex: 1; height: 1px; background: var(--border); }
+    .preview-divider-text { font-size: 10px; color: var(--text3); letter-spacing: .08em; text-transform: uppercase; }
+
+    .preview-vault-btn {
+      width: 100%; padding: 10px 14px;
+      background: transparent; border: 1px solid var(--border);
+      border-radius: 7px; font-size: 11px; color: var(--text3);
+      text-align: center; display: flex; align-items: center; justify-content: center; gap: 6px;
+    }
+
+    /* ── SECTIONS ── */
+    .section {
+      padding: 100px 24px;
+      max-width: 1020px; margin: 0 auto;
+    }
+
+    .section-label {
+      font-size: 11px; letter-spacing: .12em;
+      text-transform: uppercase; color: var(--text3);
+      margin-bottom: 14px; text-align: center;
+    }
+
+    .section-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(30px, 5vw, 50px);
+      font-weight: 400; line-height: 1.08;
+      letter-spacing: -.025em; color: var(--text);
+      text-align: center; margin-bottom: 14px;
+    }
+
+    .section-sub {
+      font-size: 15px; color: var(--text2);
+      text-align: center; max-width: 400px;
+      margin: 0 auto 60px; line-height: 1.7;
+    }
+
+    /* ── STEPS ── */
+    .steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 1px; background: var(--border);
+      border: 1px solid var(--border); border-radius: 16px; overflow: hidden;
+    }
+
+    .step { background: var(--bg); padding: 36px 32px; }
+
+    .step-num {
+      font-family: 'DM Serif Display', serif;
+      font-size: 44px; color: var(--border2);
+      line-height: 1; margin-bottom: 18px;
+    }
+
+    .step-title { font-size: 15px; font-weight: 500; color: var(--text); margin-bottom: 8px; }
+    .step-desc { font-size: 13px; color: var(--text2); line-height: 1.65; }
+
+    /* ── FEATURES ── */
+    .features {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 14px; margin-top: 48px;
+    }
+
+    .feature-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 14px; padding: 26px 26px 22px;
+      transition: border-color .2s;
+    }
+    .feature-card:hover { border-color: var(--border2); }
+
+    .feature-icon {
+      width: 34px; height: 34px;
+      background: var(--bg3); border: 1px solid var(--border2);
+      border-radius: 8px; display: flex; align-items: center; justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .feature-title { font-size: 14px; font-weight: 500; color: var(--text); margin-bottom: 7px; }
+    .feature-desc { font-size: 13px; color: var(--text2); line-height: 1.65; }
+
+    /* ── USE CASES ── */
+    .usecases {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+      gap: 10px; margin-top: 48px;
+    }
+
+    .usecase-tag {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 18px;
+      font-size: 13px; color: var(--text2);
+      display: flex; align-items: center; gap: 9px;
+      transition: border-color .2s, color .2s;
+    }
+    .usecase-tag:hover { border-color: var(--border2); color: var(--text); }
+    .usecase-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+
+    /* ── PRICING ── */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 16px; margin-top: 48px;
+      max-width: 760px; margin-left: auto; margin-right: auto;
+    }
+
+    .pricing-card {
+      background: var(--bg2); border: 1px solid var(--border);
+      border-radius: 16px; padding: 30px 26px;
+    }
+    .pricing-card.featured { border-color: var(--green-border); }
+
+    .pricing-tag {
+      font-size: 11px; letter-spacing: .08em;
+      text-transform: uppercase; color: var(--text3); margin-bottom: 18px;
+    }
+    .pricing-tag.featured-tag { color: var(--green); }
+
+    .pricing-price {
+      font-family: 'DM Serif Display', serif;
+      font-size: 38px; color: var(--text); line-height: 1; margin-bottom: 5px;
+    }
+    .pricing-price span { font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 300; color: var(--text2); }
+
+    .pricing-desc { font-size: 13px; color: var(--text2); margin-bottom: 24px; line-height: 1.6; }
+
+    .pricing-features { list-style: none; display: flex; flex-direction: column; gap: 9px; margin-bottom: 26px; }
+    .pricing-features li {
+      font-size: 13px; color: var(--text2);
+      display: flex; align-items: center; gap: 8px;
+    }
+
+    .check {
+      width: 14px; height: 14px; border-radius: 50%;
+      background: var(--green-dim); border: 1px solid var(--green-border);
+      flex-shrink: 0;
+    }
+
+    /* ── CTA ── */
+    .cta-section {
+      padding: 100px 24px; text-align: center;
+      border-top: 1px solid var(--border);
+    }
+    .cta-section h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: clamp(32px, 5vw, 54px); font-weight: 400;
+      letter-spacing: -.025em; margin-bottom: 14px; line-height: 1.08;
+    }
+    .cta-section p { font-size: 15px; color: var(--text2); margin-bottom: 36px; }
+
+    /* ── FOOTER ── */
+    footer {
+      border-top: 1px solid var(--border);
+      padding: 28px 40px;
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 14px;
+    }
+    .footer-logo { font-family: 'DM Serif Display', serif; font-size: 15px; color: var(--text3); text-decoration: none; }
+    .footer-logo span { color: var(--green); }
+    .footer-links { display: flex; gap: 22px; list-style: none; }
+    .footer-links a { font-size: 12px; color: var(--text3); text-decoration: none; transition: color .2s; }
+    .footer-links a:hover { color: var(--text2); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(16px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .reveal {
+      opacity: 0; transform: translateY(18px);
+      transition: opacity .6s ease, transform .6s ease;
+    }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    /* ── MOBILE ── */
+    @media (max-width: 640px) {
+      nav { padding: 16px 20px; }
+      .nav-links { display: none; }
+      .hero { padding: 110px 20px 60px; }
+      .section { padding: 64px 20px; }
+      footer { padding: 24px 20px; flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</head>
+<body>
+
+  <nav id="navbar">
+    <a href="#" class="nav-logo">Gated<span>.bio</span></a>
+    <div class="nav-right">
+      <ul class="nav-links">
+        <li><a href="#como-funciona">Cómo funciona</a></li>
+        <li><a href="#para-quien">Para quién</a></li>
+        <li><a href="#precios">Precios</a></li>
+        <li><a href="login.html">Entrar</a></li>
+      </ul>
+      <a href="register.html" class="nav-cta">Crear mi perfil</a>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="hero-glow"></div>
+
+    <div class="hero-badge">
+      <div class="badge-dot"></div>
+      Bio link con acceso privado integrado
+    </div>
+
+    <h1>Tu link.<br><em>Dos mundos.</em></h1>
+
+    <p class="hero-sub">
+      Comparte tus links públicos con todos y reserva tu contenido exclusivo solo para quienes tú elijas. Un enlace, dos capas.
+    </p>
+
+    <div class="hero-actions">
+      <a href="register.html" class="btn-primary">Crear mi perfil gratis</a>
+      <a href="#como-funciona" class="btn-ghost">Ver cómo funciona</a>
+    </div>
+
+    <div class="hero-preview">
+      <div class="preview-card">
+        <div class="preview-avatar">S</div>
+        <p class="preview-name">Sara Vidal</p>
+        <p class="preview-bio">Fotógrafa · Content creator<br>gated.bio/saravidal</p>
+        <div class="preview-links">
+          <div class="preview-link">Mi portfolio</div>
+          <div class="preview-link">Sesiones disponibles</div>
+          <div class="preview-link">Instagram</div>
+        </div>
+        <div class="preview-divider">
+          <div class="preview-divider-line"></div>
+          <span class="preview-divider-text">Acceso privado</span>
+          <div class="preview-divider-line"></div>
+        </div>
+        <div class="preview-vault-btn">
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#404040" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          Acceder a la zona privada
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CÓMO FUNCIONA -->
+  <section class="section" id="como-funciona">
+    <p class="section-label reveal">Cómo funciona</p>
+    <h2 class="section-title reveal">Simple. Siempre.</h2>
+    <p class="section-sub reveal">En tres pasos tienes tu perfil listo para compartir.</p>
+    <div class="steps reveal">
+      <div class="step">
+        <div class="step-num">01</div>
+        <p class="step-title">Crea tu perfil</p>
+        <p class="step-desc">Elige tu nombre de usuario, añade tu foto, bio y links públicos. Lo de siempre, pero mejor.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <p class="step-title">Configura tu zona privada</p>
+        <p class="step-desc">Añade contenido exclusivo accesible solo por contraseña, enlace secreto o acceso temporal.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <p class="step-title">Comparte un solo link</p>
+        <p class="step-desc">Tu audiencia ve la parte pública. Quien tenga acceso entra a la zona privada. Tú decides quién.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section class="section" style="padding-top:0;" id="features">
+    <p class="section-label reveal">Qué incluye</p>
+    <h2 class="section-title reveal">Todo lo que necesitas,<br><em style="color:var(--text2)">nada que sobre.</em></h2>
+    <p class="section-sub reveal">Diseñado para creadores que valoran la simplicidad y el control.</p>
+    <div class="features">
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+        <p class="feature-title">Zona privada con contraseña</p>
+        <p class="feature-desc">Una capa oculta detrás de acceso. Solo entra quien tú autorices.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></div>
+        <p class="feature-title">Links ilimitados</p>
+        <p class="feature-desc">Añade todos los links que quieras en ambas capas, pública y privada.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
+        <p class="feature-title">Acceso temporal</p>
+        <p class="feature-desc">Abre tu zona privada solo durante un tiempo limitado. Perfecto para lanzamientos.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+        <p class="feature-title">Inner circle</p>
+        <p class="feature-desc">Crea una comunidad privada de seguidores con acceso exclusivo a tu contenido.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div>
+        <p class="feature-title">Mobile-first</p>
+        <p class="feature-desc">Tu perfil se ve perfecto en cualquier dispositivo. Sin configuración extra.</p>
+      </div>
+      <div class="feature-card reveal">
+        <div class="feature-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#555" stroke-width="1.5"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div>
+        <p class="feature-title">Analíticas</p>
+        <p class="feature-desc">Visitas, clics y accesos a tu zona privada. Todo visible en un panel simple.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PARA QUIÉN -->
+  <section class="section" style="padding-top:0;" id="para-quien">
+    <p class="section-label reveal">Para quién</p>
+    <h2 class="section-title reveal">Para cualquiera que tenga<br><em style="color:var(--text2)">algo que proteger.</em></h2>
+    <p class="section-sub reveal">Creadores, marcas y personas que quieren controlar quién ve qué.</p>
+    <div class="usecases">
+      <div class="usecase-tag reveal"><div class="usecase-dot"></div>Creadores de contenido</div>
+      <div class="usecase-tag reveal"><div class="usecase-dot"></div>Influencers</div>
+      <div class="usecase-tag reveal"><div class="usecase-dot"></div>Artistas y músicos</div>
+      <div class="usecase-tag reveal"><div class="usecase-dot"></div>Fotógrafos</div>
+      <div class="usecase-tag reveal"><div class="usecase-dot"></div>Freelancers</div>
+      <div class="usecase-tag reveal"><div class="usecase-dot"></div>Coaches y mentores</div>
+      <div class="usecase-tag reveal"><div class="usecase-dot"></div>Emprendedores</div>
+      <div class="usecase-tag reveal"><div class="usecase-dot"></div>Comunidades privadas</div>
+      <div class="usecase-tag reveal"><div class="usecase-dot"></div>Marcas personales</div>
+      <div class="usecase-tag reveal"><div class="usecase-dot"></div>Creadores premium</div>
+    </div>
+  </section>
+
+  <!-- PRECIOS -->
+  <section class="section" id="precios">
+    <p class="section-label reveal">Precios</p>
+    <h2 class="section-title reveal">Gratis para empezar.<br><em style="color:var(--text2)">Pro cuando lo necesites.</em></h2>
+    <p class="section-sub reveal">Sin tarjeta de crédito. Sin compromisos.</p>
+    <div class="pricing-grid">
+      <div class="pricing-card reveal">
+        <p class="pricing-tag">Free</p>
+        <p class="pricing-price">0€ <span>/ siempre</span></p>
+        <p class="pricing-desc">Para explorar si Gated.bio es para ti.</p>
+        <ul class="pricing-features">
+          <li><div class="check"></div>Perfil público completo</li>
+          <li><div class="check"></div>Zona privada con contraseña</li>
+          <li><div class="check"></div>Hasta 5 links públicos</li>
+          <li><div class="check"></div>Hasta 3 links privados</li>
+          <li><div class="check"></div>Analíticas básicas</li>
+        </ul>
+        <a href="register.html" class="btn-ghost" style="width:100%;text-align:center;display:block;">Empezar gratis</a>
+      </div>
+      <div class="pricing-card featured reveal">
+        <p class="pricing-tag featured-tag">Pro</p>
+        <p class="pricing-price">6€ <span>/ mes</span></p>
+        <p class="pricing-desc">Para creadores que quieren el máximo control.</p>
+        <ul class="pricing-features">
+          <li><div class="check"></div>Todo lo del plan Free</li>
+          <li><div class="check"></div>Links ilimitados</li>
+          <li><div class="check"></div>Acceso temporal a la zona privada</li>
+          <li><div class="check"></div>Enlace secreto sin contraseña</li>
+          <li><div class="check"></div>Analíticas completas</li>
+          <li><div class="check"></div>Dominio personalizado</li>
+        </ul>
+        <a href="register.html" class="btn-primary" style="width:100%;text-align:center;display:block;">Empezar con Pro</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA FINAL -->
+  <section class="cta-section">
+    <h2 class="reveal">Un link.<br><em style="font-style:italic;color:var(--text2)">Con acceso privado dentro.</em></h2>
+    <p class="reveal">Crea tu perfil en menos de 2 minutos. Gratis para siempre.</p>
+    <div class="reveal"><a href="register.html" class="btn-primary">Crear mi perfil ahora</a></div>
+  </section>
+
+  <footer>
+    <a href="#" class="footer-logo">Gated<span>.bio</span></a>
+    <ul class="footer-links">
+      <li><a href="#">Privacidad</a></li>
+      <li><a href="#">Términos</a></li>
+      <li><a href="#">Contacto</a></li>
+    </ul>
+  </footer>
+
+  <script>
+    const navbar = document.getElementById('navbar');
+    window.addEventListener('scroll', () => {
+      navbar.classList.toggle('scrolled', window.scrollY > 20);
+    });
+
+    const reveals = document.querySelectorAll('.reveal');
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach((entry, i) => {
+        if (entry.isIntersecting) {
+          setTimeout(() => entry.target.classList.add('visible'), i * 50);
+          observer.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.08 });
+    reveals.forEach(el => observer.observe(el));
+  </script>
+</body>
+</html>
